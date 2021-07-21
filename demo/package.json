@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@ppzp/http-router": "0.0.0",
+    "@ppzp/resh": "file:../../resh/ppzp-resh-0.0.2.tgz",
+    "@ppzp/simple-session": "file:../ppzp-simple-session-0.0.0.tgz",
+    "cookie": "^0.4.1"
+  }
+}
