@@ -1,7 +1,7 @@
 {
   "name": "@ppzp/simple-session",
   "version": "0.0.2",
-  "description": "",
+  "description": "node.js 里的会话",
   "main": "index.js",
   "repository": {
     "type": "git",
