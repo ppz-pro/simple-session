@@ -1,29 +1,17 @@
-const Router = require('@ppzp/http-router')
 const Resh = require('@ppzp/resh')
+const Context = require('./context')
 
-const router = Router()
-const resh = Resh({ router })
-
-// =========================
-const SessionMng = require('@ppzp/simple-session')
-const sessionMng = SessionMng({
-  duration: 10 * 1000
+const app = new Resh({
+  Context
 })
 
-router.add('GET', '/session', function({ response }) {
-  sessionMng.debug()
-  response.end('session')
+app.controller.get('/test', function(ctx) {
+  const session = ctx.session()
+  if(session.index)
+    session.index ++
+  else
+    session.index = 1
+  return session
 })
 
-router.add('GET', '/check', function({ request, response }) {
-  const session = sessionMng.get(request, response)
-  response.end(session? 'yes':'no')
-})
-
-router.add('POST', '/login', async function({ request, response, getJson }) {
-  const session = sessionMng.set(request, response)
-  session.data = await getJson()
-  response.end('login')
-})
-
-resh.listen(3000)
+app.start(8080)

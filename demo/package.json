@@ -1,8 +1,16 @@
 {
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@ppzp/http-router": "0.0.0",
-    "@ppzp/resh": "file:../../resh/ppzp-resh-0.0.2.tgz",
-    "@ppzp/simple-session": "file:../ppzp-simple-session-0.0.0.tgz",
-    "cookie": "^0.4.1"
+    "@ppzp/resh": "^0.1.4",
+    "@ppzp/simple-session": "file:../ppzp-simple-session-0.0.1.tgz"
   }
 }

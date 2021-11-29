@@ -1,59 +1,55 @@
 const Cookie = require('cookie')
+const { v4: UUID } = require('uuid')
+const Events = require('events')
 
-module.exports = function({
-  duration = 2 * 60 * 60 * 1000,
-  log = console
-} = {}) {
-  log.debug('会话过期时间为', duration, 'ms')
-  const map = {}
-  return {
-    get(req, res) {
-      const token = getToken(req)
-      const session = map[token]
-      if(!session) return
+module.exports = function SessionManager(duration = 2 * 60 * 60 * 1000) {
+  if(typeof duration != 'number')
+    throw Error("参数 duration 格式不正确，需满足 typeof duration == 'number'")
+  
+  /** @type {Record<string, Session} */
+  const data = {}
 
-      writeToken(res, token) // 更新给前端
-      log.debug('删除定时器')
-      clearTimeout(session.timer) // 删除老的定时器
-      session.timer = getTimer(token) // 设置新的定时器
+  return function(req, res) {
+    // 取出 id
+    if(!req || !req.headers)
+      throw Error('req 对象不合法')
+    if(req.headers.cookie)
+      var id = Cookie.parse(req.headers.cookie).id
+    // 找到对应 session
+    const session = data[id]
+    // 没有 id 或 session 就创建
+    if(!id || !session) {
+      const session = new Session(duration, res)
+      data[session.id] = session
+      session.on('expired', () => {
+        delete data[session.id]
+      })
       return session.data
-    },
-    set(req, res) {
-      let token = getToken(req)
-      if(token && map[token]) {
-        log.debug('删除定时器')
-        clearTimeout(map[token].timer)
-        delete map[token]
-      }
-
-      token = new Date().getTime + Math.random()
-      const data = {}
-      map[token] = {
-        timer: getTimer(token),
-        data
-      }
-      writeToken(res, token) // 更新给前端
-      return data
-    },
-    debug() {
-      log.debug('simple session debug', ...(Object.values(map).map( item => item.data )))
     }
+    
+    session.refresh(res)
+    return session.data
   }
+}
 
-  function writeToken(response, token) {
-    log.debug('写入 token')
-    const expireAt = new Date(new Date().getTime() + duration).toUTCString()
-    response.setHeader('Set-Cookie', `token=${token};path=/;httpOnly;expires=${expireAt}`)
+class Session extends Events {
+  constructor(duration, res) {
+    super()
+    this.duration = duration
+    this.data = {}
+    this.id = UUID()
+    this.refresh(res)
   }
   
-  function getTimer(token) {
-    log.debug('新定时器')
-    return setTimeout(function(){
-      delete map[token]
-    }, duration)
-  }
-
-  function getToken(req) {
-    return req && req.headers && req.headers.cookie && Cookie.parse(req.headers.cookie).token
+  refresh(res) {
+    this.lastRefresh = new Date()
+    clearTimeout(this.timer)
+    // 让前端定时
+    const expireAt = new Date(this.lastRefresh.getTime() + this.duration).toUTCString()
+    res.setHeader('Set-Cookie', `id=${this.id};path=/;httpOnly;expires=${expireAt}`)
+    // 保证自己的定时
+    this.timer = setTimeout(() => {
+      this.emit('expired')
+    }, this.duration)
   }
 }
